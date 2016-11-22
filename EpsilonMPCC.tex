@@ -1,0 +1,271 @@
+\documentclass[12pt]{article}
+\usepackage{fullpage,latexsym}
+
+%
+\usepackage{amsmath,amsfonts}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\newcommand{\pref}[1]{(\ref{#1})}
+\newcommand{\rdef}{\buildrel \mbox{\rm\small def}\over=}
+
+\usepackage{color}
+
+\begin{document}
+
+\title{On $\epsilon$--regularized solutions for MPCC.}
+
+
+\author{Jean Pierre Dussault \and Mounir Haddou \and Abdeslam Kadrani \and Tangi Migot %etc.
+}
+
+
+
+\maketitle
+
+\begin{abstract}
+We discuss requirements for approximate solutions of regularized sequences of MPCC to converge to M-stationary points. To compute those approximate solutions, we present an hybrid approach using penalization and active sets quite general, encompassing KDB, KS and the butterfly regularizations.
+
+\medskip\noindent{\bf Keywords:} Complementarity constraints, MPCC, regularization, nonlinear Programming
+\end{abstract}
+
+We study the numerical solution of the mathematical programs with complementarity constraints (MPCC)
+\begin{equation}\label{MPCC1}
+ \begin{array}{ll} 
+      \min &f(x)\\
+      \textrm{s.t.}
+          &g(x)\leq0,\\
+          &h(x)=0,\\
+          &0\leq G(x)\perp H(x)\geq0,\\
+ \end{array}
+\end{equation}
+where  $f:{\mathbb{R}}^n\rightarrow{\mathbb{R}}$, $g:{\mathbb{R}}^n\rightarrow\mathbb{R}^{n_i}$, $h:\mathbb{R}^n\rightarrow\mathbb{R}^{n_e}$ and $G, H:\mathbb{R}^n\rightarrow\mathbb{R}^{n_c}$ are continuously differentiable. The relation $G(x)\perp H(x)$ may be represented by the Hadamar product $G(x)\circ H(x)\rdef \left(G_1H_1,\ldots,G_{n_c}H_{n_c}\right)$. 
+
+Using Lagrange multipliers or dual variables $\nu_g$, $\nu_h$, $\mu_{G}$, $\mu_{H}$ and $\eta$, we define the Lagrangian \begin{equation}
+\mathcal{L}(x,\nu_g,\nu_h,\mu_{G},\mu_{H},\eta) = f(x) + \nu_gg(x)+\nu_hh(x)+\mu_GG(x)+\mu_HH(x)+\eta(\ldots)).
+\end{equation}
+Note that we use the convention that primal quantities are column vectors while their dual counterparts are row vectors.
+
+In general, there does not exist KKT stationary points for \pref{MPCC1} since it is highly degenerate and does not satisfy a constraint qualification. A KKT stationary point $x^*$ would imply the existence of $\nu_g^*\le0,\nu_h^*,\mu_{G}^*\ge0,\mu_{H}^*\ge0,\eta^*\ge0$ such that $g(x^*)\le0$, $h(x^*)=0$, $0\leq G(x^*)\perp H(x^*)\geq0$, and $\nu_g^*g(x^*)=0$, $\mu_G^*G(x^*)=0$, $\mu_H^*H(x^*)=0$ and $\nabla_x(\mathcal{L}(x^*,\nu_g^*,\nu_h^*,\mu_{G}^*,\mu_{H}^*,\eta^*)=0$. Such a solution is known as a strong stationary point, S-stationary for short. The best one can ensure for a local minimum is an M-stationary point, in which the condition $\mu_{G}\ge0,\mu_{H}\ge0$ must be weakened to 
+\begin{equation}\label{Mstat}
+ \mu^{*}\geq0 \textrm{  and for all } l\in \{i:G_i(x^*)=H_i(x^*)=0\}, \textrm{ either }\mu_{G_l}^{*}, \mu_{H_l}^{*}>0, \textrm{ or }\mu_{G_l}^{*}\mu_{H_l}^{*}=0,
+\end{equation}
+Therefore, devising algorithms to reach KKT stationary points (S-stationary) is not possible in general, and we must satisfy ourselves in devising algorithms reaching M-stationary points. The following example due to Kanzow and Schwartz exhibits a situation where the global minimizer is not a KKT point but an M-stationary point. We will return to this example later on. 
+\begin{example}\label{ex:NoKKT}
+\begin{equation}\label{MPCC_Mult1}
+ \begin{array}{ll} 
+      \min &x_1+x_2-x_3\\
+      \textrm{s.t.} &-4x_1+x_3\le0\\
+          &-4x_2+x_3\le0\\
+          &0\leq x_1\perp x_2\geq0.\\
+ \end{array}
+\end{equation}
+The global solution is $(0,0,0)^t$ but is not a KKT point. Indeed, the gradient of the Lagrangian turns out to be
+\begin{equation}
+\begin{pmatrix}1\\1\\-1\end{pmatrix} +
+\nu_1\begin{pmatrix}-4\\0\\1\end{pmatrix} +
+\nu_2\begin{pmatrix}0\\-4\\1\end{pmatrix} 
+-\mu_1\begin{pmatrix}1\\0\\0\end{pmatrix} 
+-\mu_2\begin{pmatrix}0\\1\\0\end{pmatrix} +
+\eta\begin{pmatrix}0\\0\\0\end{pmatrix}
+\end{equation}
+and since $\nu_1+\nu_2=1$(third line), summing the first two lines yields $2-4(\nu_1+\nu_2)-\mu_1-\mu_2=0$ and therefore $\mu_1+\mu_2=-2$; both cannot be non-negative.
+\end{example}
+
+
+\section{Regularized subproblems}
+\label{sec:RegSubProbs}
+
+We intend replacing the complementarity constraint $G(x)\circ H(x)\leq 0$ by a suitable regularization/approximation parametrized using $t$, $\Phi(G,H,t)\le0$. The first such regularization was proposed by Scholtes, $\Phi(G,H,t) = G(x)\circ H(x) - te_{n_c}$. Many other such smoothing domains were proposed, all suffering from the weakness that a sequence of regularized stationary points can converge to a C-stationary solution for the original problem. The first approximation yielding convergence to M-stationary points was proposed by Kadrani, Dussault and Benchakroun: $\Phi(G,H,t) = (G(x)-t)\circ(H(x)-t)$. This was followed by a true regularization proposed by Kanzow and Schwartz, and the so called butterfly regularization by Dussault, Haddou and Migot using a further parameter $r$ and taking the form $\Phi(G,H,t,r) =  (H(x)-t\theta_r(G(x)))\circ(G(x)-t\theta_r(H(x)))$. Moreover, the $G(x)\ge0$ and $H(x)\ge0$ constraints are often relaxed so that the resulting problem takes the form
+\begin{equation}\label{MPCC2}
+ \begin{array}{ll} 
+      \min &f(x)\\
+      \textrm{s.t.}
+          &g(x)\leq0,\qquad
+          h(x)=0,\\
+          &G(x)\geq -t,\qquad
+          H(x)\geq -t,\\
+          &\Phi(G,H,t,r)\le0.
+ \end{array}
+\end{equation}
+
+We may now characterize KKT points for \pref{MPCC2}:
+\begin{equation}\label{stat}
+\begin{array}{cl}
+&\nabla_{x}\mathcal{L}(x,\nu_g,\nu_h,\mu_{G},\mu_{H},\eta)=0,\\
+&0\leq\nu_g, \qquad g(x)\leq0,\qquad \nu_gg(x)=0,\\
+&h(x)=0,\\
+&0\leq\mu_G, \qquad(G(x)+t\cdot e_c)\geq0, \qquad\mu_G(G(x)+t\cdot e_c)=0, \\
+&0\leq\mu_H, \qquad(H(x)+t\cdot e_c)\geq0, \qquad\mu_H(H(x)+t\cdot e_c)=0, \\
+&0\leq\eta,\qquad\Phi(G,H,t,r)\leq 0, \qquad\eta\Phi(G,H,t,r)\leq0.
+\end{array}
+\end{equation}
+
+\subsection{$\epsilon$--solution to regularized subproblems}
+
+We now consider approximate KKT points for \pref{MPCC2}. It consists in replacing most ``0'' in \pref{stat} by small quantities $\epsilon$. However, it is important that the relations on $\Phi$ be satisfied exactly, not within $\epsilon$ as we discuss below. Moreover, we chose to keep the sign constraints on the various multipliers. The remaining ``0'' are replaced by $\epsilon$. Each relation could have a dedicated $\epsilon$, but we keep the notation simpler by using a single $\epsilon$. Also, relaxed constraints $G(x)\ge -t$ and $H(x)\ge -t$ are not further relaxed.
+\begin{definition}\label{def:EpsSol}
+We say that $x\in\mathbb{R}^{n+3n_c+n_i+n_e}$ is an $\epsilon$-stationary point of (\ref{MPCC1}) if there exist multipliers $\nu,\mu,\eta$ satisfying
+\begin{equation}\label{epstat}
+\begin{array}{cl}
+&\left\|\nabla_{x}\mathcal{L}(x,\nu_g,\nu_h,\mu_{G},\mu_{H},\eta)\right\|_\infty\leq\epsilon,\\
+&0\leq\nu_g,  \qquad g(x)\leq\epsilon, \qquad \nu_gg(x)\leq\epsilon,\\
+&\|h(x)\|\le\epsilon,\qquad|\nu_hh(x)|\leq\epsilon,\\
+&0\leq\mu_G, \qquad(G(x)+t\cdot e_c)\geq0, \qquad\mu_G(G(x)+t\cdot e_c)\leq\epsilon, \\
+&0\leq\mu_H, \qquad(H(x)+t\cdot e_c)\geq0, \qquad\mu_H(H(x)+t\cdot e_c)\leq\epsilon, \\
+&0\leq\eta,\qquad\Phi(G,H,t,r)\leq 0, \qquad\eta\Phi(G,H,t,r)\leq0.
+\end{array}
+\end{equation}
+\end{definition}
+
+As noted above, the formulation avoids relaxing the $\Phi(G,H,t,r)$ relations. If the complementarity condition on the complementarity constraint is relaxed to
+\[ \eta\left[(G(x)-t\cdot e_c)\circ(H(x)-t\cdot e_c)\right]\leq\epsilon, \]
+Kanzow and Schwartz provide the following example exhibiting convergence to a W-stationary point.
+
+\begin{example}
+\begin{equation}\label{MPCC_W}
+ \begin{array}{ll} 
+      \min &x_2-x_1\\
+      \textrm{s.t.}
+          &0\leq x_1\perp x_2\geq0.\\
+ \end{array}
+\end{equation}
+If we perturb the relation $\eta\Phi(x_1,x_2,t,r)\leq\epsilon$ (leaving the other conditions $x\ge0$, $\Phi(x_1,x_2,t,r)\le0$), $\eta$ may be positive when the constraint $\Phi(x_1,x_2,t,r)$ is not active. For the case KDB $\Phi(x_1,x_2,t,r) = (x_1-t)(x_2-t)=-\epsilon^2$ with $\epsilon=t^2$, the point $x(t,\epsilon)={t-\epsilon\choose t+\epsilon}\geq{0\choose0}$ is $\epsilon$--stationary for small enough $\epsilon$: $\Phi(x_1,x_2,t,r)\le\epsilon$ and the choice $\eta=\frac1\epsilon$ makes the Lagrangian ${-1\choose1}+\eta\Phi(x_1,x_2,t,r)$ vanish. $x(t)$ converges to the origin when $t,\epsilon\longrightarrow0$ but the origin is only weakly stationary.
+\end{example}
+
+Now, if the complementarity constraint is relaxed to
+\[(G(x)-t\cdot e_c)\circ(H(x)-t\cdot e_c)\leq \epsilon,\]
+convergence may occur to C-stationary points as shown in the following example.
+\begin{example}
+\begin{equation}\label{MPCC_C}
+ \begin{array}{ll} 
+      \min &\frac12((x_1-1)^2 + (x_2-1)^2)\\
+      \textrm{s.t.}
+          &0\leq x_1\perp x_2\geq0.\\
+ \end{array}
+\end{equation}
+We specialize the relations \pref{epstat} as the following, for $t$ and $\epsilon$ close to 0.
+\begin{equation}\label{epstat_2}
+\begin{array}{cl}
+&\left\|{x_1-1\choose x_2-1}-\mu_1{1\choose0} - \mu_2{0\choose1}+\eta{x_2-t\choose x_1-t}\right\|_\infty\leq\epsilon,\\
+&0\leq\mu_1, \qquad(x_1+t)\geq0, \qquad\mu_1(x_1+t)\leq\epsilon, \\
+&0\leq\mu_2, \qquad(x_2+t)\geq0, \qquad\mu_2(x_2+t)\leq\epsilon, \\
+&0\leq\eta,\qquad(x_1-t)(x_2-t)\leq \epsilon, \qquad\eta\left[(x_1-t)(x_2-t)-\epsilon\right]\geq0.
+\end{array}
+\end{equation}
+The points $t+\sqrt{\epsilon}\choose t+\sqrt{\epsilon}$ together with $\mu_1=\mu_2=0$ and $\eta=\frac{1-t-\sqrt{\epsilon}}{\sqrt{\epsilon}}\nearrow+\infty$ satisfy the above relations. The limit point when $t, \epsilon\longrightarrow0$ is the origin, which is a C-stationary point with $\mu_1=\mu_2=-1$.
+\end{example}
+On this example, the relaxed regularized complementarity constraint is active for any small enough $t,\epsilon>0$; moreover, the relaxed regularized stationary point is a local maximum for $t+2\sqrt{\epsilon}<1$. The origin is a local maximum for the original MPCC
+
+Another example might help understanding the phenomenon.
+
+\begin{example}
+\begin{equation}\label{MPCC_C}
+ \begin{array}{ll} 
+      \min &-\frac12((x_1-1)^2 + (x_2-1)^2)\\
+      \textrm{s.t.}
+          &0\leq x_1\perp x_2\geq0.\\
+ \end{array}
+\end{equation}
+We again specialize the relations \pref{epstat} as the following, for $t$ and $\epsilon$ close to 0.
+\begin{equation}\label{epstat_2}
+\begin{array}{cl}
+&\left\|{1-x_1\choose 1-x_2}-\mu_1{1\choose0} - \mu_2{0\choose1}+\eta{x_2-t\choose x_1-t}\right\|_\infty\leq\epsilon,\\
+&0\leq\mu_1, \qquad(x_1+t)\geq0, \qquad\mu_1(x_1+t)\leq\epsilon, \\
+&0\leq\mu_2, \qquad(x_2+t)\geq0, \qquad\mu_2(x_2+t)\leq\epsilon, \\
+&0\leq\eta,\qquad(x_1-t)(x_2-t)\leq \epsilon, \qquad\eta\left[(x_1-t)(x_2-t)-\epsilon\right]\geq0.
+\end{array}
+\end{equation}
+This time, the points $t+\sqrt{\epsilon}\choose t+\sqrt{\epsilon}$ are no more $\epsilon$-stationary but the points $x={1\choose -t}$, $\mu_2=1+t$ and $x={-t\choose 1}$, $\mu_1=1+t$ are. Their limits are $1\choose 0$ and $0\choose 1$ which are KKT points for the original MPCC with $\mu={0\choose1}$ or $\mu={1\choose0}$. ${-t\choose -t}$ with $\mu={1+t\choose 1+t}$ is also stationary, and of course converges to the origin, a local minimizer of the original MPCC.
+\end{example}
+In this example, the limit points are not minimizers for the original MPCC, but satisfy the first order KKT conditions for a minimizer. The second order conditions fails for those limit points. The two examples show limiting solutions of regularized subproblems which are not local minimizers of the original MPCC. The first one fails to satisfy a first order condition while the second one satisfies such a first order condition but not the second order one (it is a maximum on the active set).
+
+\subsection{Lagrange multipliers of regularizations}
+
+The following example develops on example \ref{ex:NoKKT} due to Kanzow and Schwartz and exhibits a situation where  the regularized subproblems have no KKT point.
+\begin{example}\label{ex:NoKKT2}
+The KDB regularized problem is
+\begin{equation}\label{MPCC_Mult2}
+ \begin{array}{ll} 
+      \min &x_1+x_2-x_3\\
+      \textrm{s.t.}&-4x_1+x_3\le0\\
+          &-4x_2+x_3\le0\\
+          &x_1\geq-t\\
+          &x_2\geq-t\\
+          &(x_1-t)(x_2-t)\le0.\\
+ \end{array}
+\end{equation}
+The point $(t,t,4t)^t$ is feasible so that the minimum value of this program is $\leq -2t$. Moreover, whenever $x_1>t$, we must have $x_2<=t$ to satisfy $(x_1-t)(x_2-t)\le0$. This allows to conclude that $(t,t,4t)^t$ is the global minimum of the regularized problem. $\mu=0$ and the gradient of the Lagrangian yields
+ \begin{equation}
+\begin{pmatrix}1\\1\\-1\end{pmatrix} +
+\nu_1\begin{pmatrix}-4\\0\\1\end{pmatrix} +
+\nu_2\begin{pmatrix}0\\-4\\1\end{pmatrix} +
+\eta\begin{pmatrix}0\\0\\0\end{pmatrix}
+\end{equation}
+which cannot be satisfied.
+\end{example}
+This last example seems to contradict theorem 4.6 in \cite{KS13}, but MPCC-LICQ is not satisfied by four constraints in $\mathbb{R}^3$.
+
+\section{Convegence of $\epsilon$--stationary points}
+We now address the convergence of sequences of $\epsilon$--stationary points. With the conditions developed in the definition \ref{def:EpsSol}, section~\ref{sec:RegSubProbs}, we are able to prove convergence to M-stationary points.{
+
+
+\section{How to compute $\epsilon$--stationary points}
+We now specialize the MPCC models using slack variables to state complementarity constraints using only variable components. Moreover, we treat all other constraints using penalization. 
+
+By introducing slack variables, MPCC \pref{MPCC1} can be equivalently written in the form
+\begin{equation}\label{MPCC2b}
+ \begin{array}{ll} 
+      \min &f(x)\\
+      \textrm{s.t.}
+          &g(x)+s=0,\quad s\geq0,\\
+          &h(x)=0,\\
+          &G(x)-y_{G}=0,\quad H(x)-y_{H}=0,\\
+          &y_{G}\geq0,\quad y_{H}\geq0,\\
+          &y_{G}\circ y_{H}\leq 0.
+       \end{array}
+\end{equation}
+This reformulated MPCC has the same properties as (\ref{MPCC1}).
+
+We now penalize all of the equality constraints.
+
+\begin{equation}\label{SMPCC}
+ \begin{array}{ll} 
+      \min &f(x)+\frac{1}{2\rho}\phi(x,y,s)\\
+      \textrm{s.t.}
+          &s\geq0,\\
+          &y\geq0,\\
+          &y_{G}\circ y_{H}\leq 0,
+       \end{array}
+\end{equation}
+where $\phi$ is the penalty function  
+\begin{displaymath}
+\phi(x,y,s)=\left\|\left(g(x)+s,h(x),G(x)-y_{G},H(x)-y_{H}\right)\right\|^{2}.
+\end{displaymath}
+We now regularize the complementarity constraints to get
+\begin{equation}\label{SMPCC2}
+ \begin{array}{ll} 
+      \min &f(x)+\frac{1}{2\rho}\phi(x,y,s)\\
+      \textrm{s.t.}
+          &s\geq0,\\
+          &y_{G}\geq -te,\quad y_{H}\geq -te,\\
+          &\Phi(y_{G},y_{H},t,r)\leq 0.
+       \end{array}
+\end{equation}
+Recall that the general form is simplified to $\Phi(y_G,y_H,t,r) =  (y_H-t\theta_r(y_G))\circ(y_G-t\theta_r(y_H))$. This particular form allows to construct an active set strategy involving the ``pseudo constraints'' $(y_H-t\theta_r(y_G))=0$ and $(y_G-t\theta_r(y_H))=0$. One of those must be non negative and the other non positive, component by component. When one vanishes, it becomes ``active''. The other bounds $y_{G}\geq -te$ and $ y_{H}\geq -te$ are mutually exclusive with the pseudo constraints, the $\Phi$ constraints acting as upper bounds. 
+
+When such a bound becomes active, say $y_{H_i}=t\theta_r(y_{G_i})$, its value ($t\theta_r(y_{G_i})$) may be substituted for $y_{H_i}$ in \pref{SMPCC2}. Similarly, any active $s_j$ is set to 0 and any active $y_{G_i}=-t$ is treated as fixed to $-t$. For such an active set candidate (working set), the essentially unconstrained resulting problem is addressed by any descent method (we recommend ARC). As with any active set method, when a suitable approximate solution is reached on a given working set, a constraint with an estimated Lagrange multiplier of wrong sign is selected to be removed from the working set. In our particular setting, it means freeing a component. When the unconstrained descent method hits an inactive constraint, it is added to the working set.
+
+Therefore, the penalization approach takes care of the various $\epsilon$ in the approximate solutions (by reducing $\rho$ for fixed $t$) while the active set approach ensures the exact satisfaction of the relations involving $\Phi$. The remainder of this section develops the details of this combined penalization--active set approach. Notice that the resulting algorithm generalizes the one in \cite{KDB15} to address non linear $\theta$ functions by explicitly resorting to substitution when activating a constraint.
+
+\subsection{Active set solution of \pref{SMPCC2} for fixed $\rho$}
+
+\subsection{Strategies to drive $\rho$ and $t$ to zero}
+
+
+\bibliography{EpsMPCC}
+\bibliographystyle{plain}
+
+\end{document}
+

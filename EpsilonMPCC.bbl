@@ -1,0 +1,15 @@
+\begin{thebibliography}{1}
+
+\bibitem{KDB15}
+Abdeslam Kadrani, Jean~Pierre Dussault, and Abdelhamid Benchakroun.
+\newblock A globally convergent algorithm for {MPCC}.
+\newblock {\em EURO Journal on Computational Optimization}, 3(3):263--296,
+  2015.
+
+\bibitem{KS13}
+Christian Kanzow and Alexandra Schwartz.
+\newblock A new regularization method for mathematical programs with
+  complementarity constraints with strong convergence properties.
+\newblock {\em SIAM Journal on Optimization}, 23(2):770--798, 2013.
+
+\end{thebibliography}
